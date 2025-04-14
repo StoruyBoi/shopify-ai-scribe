@@ -22,3 +22,15 @@ export interface ChatHistoryItem {
   sectionType?: string;
   requirements?: string;
 }
+
+// API request/response interfaces
+export interface GenerateCodeRequest {
+  sectionType: string;
+  requirements: string;
+  imageDescription: string;
+}
+
+export interface GenerateCodeResponse {
+  code: string;
+  shopifyLiquid: string;
+}

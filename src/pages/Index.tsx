@@ -187,8 +187,8 @@ const Index = () => {
   
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto text-center pt-4 pb-8">
+      <div className="w-full py-6">
+        <div className="max-w-4xl mx-auto text-center px-4 pb-8 pt-4">
           <div className="inline-block bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium mb-4">
             AI-Powered Shopify Code Generator
           </div>
@@ -201,39 +201,41 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-          <div className="space-y-6">
-            <ImageUploader 
-              onImageUpload={handleImageUpload} 
-              preview={imagePreview}
-              onRemoveImage={handleRemoveImage}
-            />
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+            <div className="space-y-6">
+              <ImageUploader 
+                onImageUpload={handleImageUpload} 
+                preview={imagePreview}
+                onRemoveImage={handleRemoveImage}
+              />
+              
+              <SectionTypeSelector
+                selectedOptions={sectionOptions}
+                onOptionsChange={handleSectionOptionsChange}
+                isVisible={currentStep >= 2}
+              />
+              
+              <RequirementsForm
+                requirements={requirements}
+                onRequirementsChange={setRequirements}
+                onGenerate={generateCode}
+                isGenerating={isGenerating}
+                availableCredits={credits.current}
+                selectedOptions={sectionOptions}
+                imageUploaded={!!image}
+                isVisible={currentStep >= 3}
+              />
+            </div>
             
-            <SectionTypeSelector
-              selectedOptions={sectionOptions}
-              onOptionsChange={handleSectionOptionsChange}
-              isVisible={currentStep >= 2}
-            />
-            
-            <RequirementsForm
-              requirements={requirements}
-              onRequirementsChange={setRequirements}
-              onGenerate={generateCode}
-              isGenerating={isGenerating}
-              availableCredits={credits.current}
-              selectedOptions={sectionOptions}
-              imageUploaded={!!image}
-              isVisible={currentStep >= 3}
-            />
-          </div>
-          
-          <div>
-            <PreviewArea 
-              previewUrl={imagePreview}
-              isProcessing={isGenerating}
-              generatedCode={generatedCode}
-              currentStep={currentStep}
-            />
+            <div>
+              <PreviewArea 
+                previewUrl={imagePreview}
+                isProcessing={isGenerating}
+                generatedCode={generatedCode}
+                currentStep={currentStep}
+              />
+            </div>
           </div>
         </div>
       </div>

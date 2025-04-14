@@ -2,17 +2,17 @@
 /**
  * Claude API integration for Shopify Liquid code generation
  */
+import { GenerateCodeRequest, GenerateCodeResponse } from "@/types";
 
+// The main function to generate code via API
 export async function generateShopifyCode(
   sectionType: string,
   requirements: string,
   imageDescription: string
-) {
+): Promise<{ code: string; shopifyLiquid: string }> {
   try {
-    // For production use - client-side code cannot directly call Claude API due to CORS
-    // This implementation uses a mock response for demonstration
-    // In production, this would call a serverless function or API route
-    console.log("Calling mock API with:", { sectionType, requirements, imageDescription });
+    // For now we'll use a mock response, but the code is ready to call a real API
+    console.log("Generating code for:", { sectionType, requirements, imageDescription });
     
     // Mock generating for 3 seconds
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -212,15 +212,9 @@ function getMockResponse(sectionType: string): { code: string, shopifyLiquid: st
   };
 }
 
-// This would be used in a Next.js API route or serverless function
-// DO NOT use this function directly from the browser due to CORS restrictions
-export async function handleClaudeAPIRequest(sectionType: string, requirements: string, imageBase64: string) {
+// This function would be used in a serverless function to call Claude API directly
+export async function callClaudeAPI(apiKey: string, prompt: string): Promise<string> {
   try {
-    const apiKey = process.env.CLAUDE_API_KEY;
-    if (!apiKey) {
-      throw new Error("Claude API key not found");
-    }
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -234,7 +228,7 @@ export async function handleClaudeAPIRequest(sectionType: string, requirements: 
         messages: [
           { 
             role: "user", 
-            content: createPrompt(sectionType, requirements, `Image content: ${imageBase64 ? "Image uploaded successfully" : "No image provided"}`) 
+            content: prompt
           }
         ]
       }),
@@ -246,12 +240,24 @@ export async function handleClaudeAPIRequest(sectionType: string, requirements: 
     }
 
     const data = await response.json();
-    return {
-      code: data.content[0].text.split('{% schema %}')[0] || '',
-      shopifyLiquid: '{% schema %}' + data.content[0].text.split('{% schema %}')[1] || ''
-    };
+    return data.content[0].text;
   } catch (error) {
-    console.error('Error generating code:', error);
+    console.error('Error calling Claude API:', error);
     throw error;
   }
+}
+
+// This shows how to parse the API response to get the code and schema
+export function parseClaudeResponse(responseText: string): { code: string, shopifyLiquid: string } {
+  // Split by schema tag to separate the code and schema
+  const parts = responseText.split('{% schema %}');
+  
+  if (parts.length < 2) {
+    return { code: responseText, shopifyLiquid: '' };
+  }
+  
+  return {
+    code: parts[0].trim(),
+    shopifyLiquid: `{% schema %}${parts[1].trim()}`
+  };
 }

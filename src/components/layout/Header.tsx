@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({
   const displayCredits = propCredits || credits;
   
   return (
-    <header className="border-b border-border bg-background/60 backdrop-blur-md sticky top-0 z-50 py-4">
+    <header className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-50 py-4 w-full">
       <div className="container mx-auto px-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
