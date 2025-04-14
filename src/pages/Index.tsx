@@ -110,12 +110,12 @@ const Index = () => {
   
   return (
     <Layout>
-      <div className="mb-6">
+      <div className="container mx-auto px-4 py-6">
         <div className="max-w-4xl mx-auto text-center pt-4 pb-8">
           <div className="inline-block bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium mb-4">
             AI-Powered Shopify Code Generator
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-4">
+          <h1 className="text-4xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-app-purple to-app-blue">
             Transform Images into Shopify Liquid Code
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -123,38 +123,38 @@ const Index = () => {
             Choose from product listings, sliders, banners and more.
           </p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-        <div className="space-y-6">
-          <ImageUploader 
-            onImageUpload={handleImageUpload} 
-            preview={imagePreview}
-            onRemoveImage={handleRemoveImage}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          <div className="space-y-6">
+            <ImageUploader 
+              onImageUpload={handleImageUpload} 
+              preview={imagePreview}
+              onRemoveImage={handleRemoveImage}
+            />
+            
+            <SectionTypeSelector
+              selectedOptions={sectionOptions}
+              onOptionsChange={setSectionOptions}
+            />
+            
+            <RequirementsForm
+              requirements={requirements}
+              onRequirementsChange={setRequirements}
+              onGenerate={generateCode}
+              isGenerating={isGenerating}
+              availableCredits={credits.current}
+              selectedOptions={sectionOptions}
+              imageUploaded={!!image}
+            />
+          </div>
           
-          <SectionTypeSelector
-            selectedOptions={sectionOptions}
-            onOptionsChange={setSectionOptions}
-          />
-          
-          <RequirementsForm
-            requirements={requirements}
-            onRequirementsChange={setRequirements}
-            onGenerate={generateCode}
-            isGenerating={isGenerating}
-            availableCredits={credits.current}
-            selectedOptions={sectionOptions}
-            imageUploaded={!!image}
-          />
-        </div>
-        
-        <div>
-          <PreviewArea 
-            previewUrl={imagePreview}
-            isProcessing={isGenerating}
-            generatedCode={generatedCode}
-          />
+          <div>
+            <PreviewArea 
+              previewUrl={imagePreview}
+              isProcessing={isGenerating}
+              generatedCode={generatedCode}
+            />
+          </div>
         </div>
       </div>
     </Layout>

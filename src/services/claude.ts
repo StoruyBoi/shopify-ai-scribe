@@ -9,9 +9,10 @@ export async function generateShopifyCode(
   imageDescription: string
 ) {
   try {
-    // In a production Next.js app, this would call a serverless function
-    // For now, we'll use a mock response to demonstrate the flow
-    console.log("Would call Claude API with:", { sectionType, requirements, imageDescription });
+    // For production use - client-side code cannot directly call Claude API due to CORS
+    // This implementation uses a mock response for demonstration
+    // In production, this would call a serverless function or API route
+    console.log("Calling mock API with:", { sectionType, requirements, imageDescription });
     
     // Mock generating for 3 seconds
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -211,7 +212,8 @@ function getMockResponse(sectionType: string): { code: string, shopifyLiquid: st
   };
 }
 
-// This would be used in a Next.js API route
+// This would be used in a Next.js API route or serverless function
+// DO NOT use this function directly from the browser due to CORS restrictions
 export async function handleClaudeAPIRequest(sectionType: string, requirements: string, imageBase64: string) {
   try {
     const apiKey = process.env.CLAUDE_API_KEY;
@@ -244,7 +246,10 @@ export async function handleClaudeAPIRequest(sectionType: string, requirements: 
     }
 
     const data = await response.json();
-    return data.content[0].text;
+    return {
+      code: data.content[0].text.split('{% schema %}')[0] || '',
+      shopifyLiquid: '{% schema %}' + data.content[0].text.split('{% schema %}')[1] || ''
+    };
   } catch (error) {
     console.error('Error generating code:', error);
     throw error;

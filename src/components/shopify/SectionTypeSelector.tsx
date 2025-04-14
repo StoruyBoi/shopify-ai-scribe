@@ -1,80 +1,82 @@
 
-import React from "react";
-import { Check } from "lucide-react";
-import { ImageOptions } from "@/types";
+import React from 'react';
+import { Check } from 'lucide-react';
+import { ImageOptions } from '@/types';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 
-const options: Array<{
+interface SectionTypeSelectorProps {
+  selectedOptions: ImageOptions;
+  onOptionsChange: (options: ImageOptions) => void;
+}
+
+const sectionTypes: Array<{
   value: ImageOptions['purpose'];
   title: string;
   description: string;
   icon: string;
 }> = [
   {
-    value: "product",
-    title: "Product Section",
-    description: "Product details with images and info",
-    icon: "🛍️"
+    value: 'product',
+    title: 'Product Section',
+    description: 'Product details with images',
+    icon: '🛍️'
   },
   {
-    value: "slider",
-    title: "Slideshow",
-    description: "Multiple images in a carousel",
-    icon: "🔄"
+    value: 'slider',
+    title: 'Slideshow',
+    description: 'Images in carousel',
+    icon: '🔄'
   },
   {
-    value: "banner",
-    title: "Image Banner",
-    description: "Large image with overlay text",
-    icon: "🏷️"
+    value: 'banner',
+    title: 'Banner',
+    description: 'Hero with overlay text',
+    icon: '🏷️'
   },
   {
-    value: "collection",
-    title: "Collection List",
-    description: "Grid of product collections",
-    icon: "📦"
+    value: 'collection',
+    title: 'Collection Grid',
+    description: 'Product collections',
+    icon: '📦'
   },
   {
-    value: "announcement",
-    title: "Announcement Bar",
-    description: "Top of page announcements",
-    icon: "📢"
+    value: 'announcement',
+    title: 'Announcement',
+    description: 'Top notifications',
+    icon: '📢'
   },
   {
-    value: "header",
-    title: "Header",
-    description: "Navigation menu and logo",
-    icon: "🔝"
+    value: 'footer',
+    title: 'Footer',
+    description: 'Page footer with links',
+    icon: '🔚'
   },
   {
-    value: "footer",
-    title: "Footer",
-    description: "Links and info at page bottom",
-    icon: "🔚"
+    value: 'header',
+    title: 'Header',
+    description: 'Navigation & logo',
+    icon: '🔝'
   },
   {
-    value: "image-with-text",
-    title: "Image with Text",
-    description: "Image alongside text content",
-    icon: "📝"
+    value: 'image-with-text',
+    title: 'Image with Text',
+    description: 'Side by side layout',
+    icon: '📝'
   },
   {
-    value: "multicolumn",
-    title: "Multi-column",
-    description: "Content in multiple columns",
-    icon: "🏛️"
+    value: 'multicolumn',
+    title: 'Multi Column',
+    description: 'Features or benefits',
+    icon: '🏛️'
   },
   {
-    value: "custom",
-    title: "Custom Section",
-    description: "Define your own section type",
-    icon: "✨"
+    value: 'custom',
+    title: 'Custom Section',
+    description: 'Your own section type',
+    icon: '✨'
   }
 ];
-
-interface SectionTypeSelectorProps {
-  selectedOptions: ImageOptions;
-  onOptionsChange: (options: ImageOptions) => void;
-}
 
 const SectionTypeSelector: React.FC<SectionTypeSelectorProps> = ({ 
   selectedOptions, 
@@ -87,39 +89,61 @@ const SectionTypeSelector: React.FC<SectionTypeSelectorProps> = ({
     });
   };
   
+  const handleCustomTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...selectedOptions,
+      customType: e.target.value
+    });
+  };
+
   return (
-    <div className="glass-card">
-      <div className="p-4">
-        <h3 className="text-lg font-medium mb-3">Shopify Section Type</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-          {options.map((option) => (
+    <Card>
+      <CardContent className="p-6">
+        <h3 className="text-lg font-semibold mb-3">Section Type</h3>
+        <p className="text-sm text-muted-foreground mb-4">Select the type of Shopify section you want to create</p>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {sectionTypes.map((option) => (
             <div
               key={option.value}
               onClick={() => handlePurposeSelect(option.value)}
-              className={`p-3 rounded-lg border transition-all cursor-pointer
+              className={`p-3 rounded-lg border transition-all cursor-pointer relative
                 ${selectedOptions.purpose === option.value 
-                  ? 'border-primary bg-primary/10' 
-                  : 'border-border bg-card/50 hover:border-muted-foreground/50'
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary/30' 
+                  : 'border-border bg-card/50 hover:border-muted-foreground/30 hover:bg-muted/10'
                 }
               `}
             >
-              <div className="flex items-start gap-2">
-                <div className="text-xl">{option.icon}</div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm">{option.title}</h4>
-                    {selectedOptions.purpose === option.value && (
-                      <Check className="h-3.5 w-3.5 text-primary" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
-                </div>
-              </div>
+              {selectedOptions.purpose === option.value && (
+                <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-primary rounded-full flex items-center justify-center">
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                </span>
+              )}
+              <div className="text-3xl mb-2 opacity-90">{option.icon}</div>
+              <h4 className="font-medium text-sm">{option.title}</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{option.description}</p>
             </div>
           ))}
         </div>
-      </div>
-    </div>
+        
+        {/* Custom Section Type Input */}
+        {selectedOptions.purpose === 'custom' && (
+          <div className="mt-4">
+            <label htmlFor="customType" className="block text-sm font-medium mb-1">
+              Custom Section Type Name
+            </label>
+            <Input
+              id="customType"
+              type="text"
+              placeholder="Enter custom section type name"
+              value={selectedOptions.customType || ''}
+              onChange={handleCustomTypeChange}
+              className="w-full max-w-sm"
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

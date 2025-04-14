@@ -1,14 +1,15 @@
 
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Wand2, Info, Server, ArrowRight } from "lucide-react";
-import { ImageOptions } from "@/types";
+import React from 'react';
+import { Sparkles, Bot, InfoIcon, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ImageOptions } from '@/types';
 
 interface RequirementsFormProps {
   requirements: string;
-  onRequirementsChange: (requirements: string) => void;
+  onRequirementsChange: (text: string) => void;
   onGenerate: () => void;
   isGenerating: boolean;
   availableCredits: number;
@@ -16,7 +17,17 @@ interface RequirementsFormProps {
   imageUploaded: boolean;
 }
 
-export function RequirementsForm({
+const DEFAULT_REQUIREMENTS: Record<string, string> = {
+  product: "Create a product section with image on the left and product details on the right. Include product title, price, variants selection, quantity picker, and add to cart button.",
+  slider: "Create a full-width image slider with 3 slides, navigation arrows, and dot indicators. Add a heading and text overlay on each slide with a call-to-action button.",
+  banner: "Design a hero banner with a background image, heading text overlay, subheading, and a call-to-action button. Make it responsive for all devices.",
+  collection: "Create a collection grid showing 3 collections per row, with collection images, titles, and view collection buttons. Make it responsive with 2 columns on tablet and 1 column on mobile.",
+  announcement: "Create an announcement bar that sticks to the top of the page, with customizable text and link. Include an option to dismiss it.",
+  image_with_text: "Create a section with an image on the left and text content on the right. Include heading, paragraph text, and a button. Make it responsive with stacked layout on mobile.",
+  default: "Please describe your section requirements in detail. Include information about layout, content, styling preferences, responsive behavior, and any special functionality."
+};
+
+const RequirementsForm: React.FC<RequirementsFormProps> = ({
   requirements,
   onRequirementsChange,
   onGenerate,
@@ -24,95 +35,86 @@ export function RequirementsForm({
   availableCredits,
   selectedOptions,
   imageUploaded
-}: RequirementsFormProps) {
+}) => {
+  // Get appropriate placeholder based on section type
+  const getPlaceholderText = () => {
+    const purpose = selectedOptions.purpose.replace('-', '_');
+    return DEFAULT_REQUIREMENTS[purpose] || DEFAULT_REQUIREMENTS.default;
+  };
+  
+  // Handle loading sample requirements
+  const loadSampleRequirements = () => {
+    onRequirementsChange(getPlaceholderText());
+  };
+  
+  // Determine if the generate button should be disabled
+  const isGenerateDisabled = isGenerating || !requirements.trim() || !imageUploaded || availableCredits <= 0;
+
   return (
-    <Card className="glass-card">
-      <CardContent className="p-4">
+    <Card className="overflow-hidden">
+      <CardContent className="p-6">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-medium">Section Requirements</h3>
-          <div className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full">
-            {availableCredits}/3 credits remaining
-          </div>
+          <h3 className="text-lg font-semibold">Requirements</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-8 text-xs"
+            onClick={loadSampleRequirements}
+          >
+            Load Sample
+          </Button>
         </div>
+        
+        <p className="text-sm text-muted-foreground mb-4">
+          Describe how your Shopify section should look and function
+        </p>
         
         <Textarea
           value={requirements}
           onChange={(e) => onRequirementsChange(e.target.value)}
-          placeholder={`Describe your ${selectedOptions.purpose} section requirements in detail. For example: 'A ${selectedOptions.purpose} with a large image, heading, subheading, and a call-to-action button. The text should be on the left and image on the right. Mobile layout should stack with text on top.'`}
-          className="min-h-[150px] mb-4"
+          placeholder={getPlaceholderText()}
+          className="min-h-[180px] mb-4 font-mono text-sm"
         />
         
-        <div className="mt-3 p-3 bg-blue-50/30 border border-blue-200 rounded-md flex items-start gap-2 text-sm">
-          <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-          <div className="text-blue-700">
-            <p className="font-medium mb-1">Demo Mode Active</p>
-            <p>Due to CORS restrictions, this demo uses mock responses instead of actual Claude API calls.</p>
-          </div>
-        </div>
-
-        <div className="mt-3 p-4 bg-green-50/30 border border-green-200 rounded-md">
-          <h4 className="text-sm font-medium text-green-800 flex items-center gap-2 mb-2">
-            <Server className="h-4 w-4" />
-            Next.js Implementation Guide
-          </h4>
-          <p className="text-xs text-green-700 mb-2">
-            To use the actual Claude API, create a Next.js API route that acts as a proxy:
-          </p>
-          <div className="bg-white/60 rounded text-xs p-3 font-mono text-green-900 space-y-1 overflow-x-auto">
-            <p className="whitespace-nowrap">
-              <span className="text-green-600">// pages/api/generate.js</span>
-            </p>
-            <p className="whitespace-nowrap">export default async function handler(req, res) {'{'}</p>
-            <p className="whitespace-nowrap pl-2">if (req.method !== 'POST') return res.status(405).end();</p>
-            <p className="whitespace-nowrap pl-2">const {'{ sectionType, requirements, imageBase64 }'} = req.body;</p>
-            <p className="whitespace-nowrap pl-2">const response = await fetch('https://api.anthropic.com/v1/messages', {'{'}</p>
-            <p className="whitespace-nowrap pl-4">method: 'POST',</p>
-            <p className="whitespace-nowrap pl-4">headers: {'{'}</p>
-            <p className="whitespace-nowrap pl-6">'x-api-key': process.env.CLAUDE_API_KEY,</p>
-            <p className="whitespace-nowrap pl-6">'anthropic-version': '2023-06-01',</p>
-            <p className="whitespace-nowrap pl-6">'content-type': 'application/json'</p>
-            <p className="whitespace-nowrap pl-4">{'}'},</p>
-            <p className="whitespace-nowrap pl-4">body: JSON.stringify({/* Claude request body */})</p>
-            <p className="whitespace-nowrap pl-2">{'}'});</p>
-            <p className="whitespace-nowrap pl-2">const data = await response.json();</p>
-            <p className="whitespace-nowrap pl-2">return res.status(200).json(data);</p>
-            <p className="whitespace-nowrap">{'}'}</p>
-          </div>
-          <div className="mt-2 flex items-center text-xs text-green-700">
-            <ArrowRight className="h-3 w-3 mr-1" />
-            <span>Then update the client code to call this API route instead of directly calling Claude.</span>
-          </div>
-        </div>
-        
-        <Button
-          onClick={onGenerate}
-          disabled={isGenerating || requirements.trim().length < 10 || availableCredits <= 0 || !imageUploaded}
-          className="w-full mt-4 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-        >
-          <Wand2 size={16} className="mr-2" />
-          {isGenerating ? "Generating..." : "Generate Section Code"}
-        </Button>
-        
         {!imageUploaded && (
-          <p className="text-xs text-destructive mt-2 text-center">
-            Please upload an image first
-          </p>
+          <Alert variant="warning" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Missing reference image</AlertTitle>
+            <AlertDescription>
+              Please upload an image before generating code
+            </AlertDescription>
+          </Alert>
         )}
         
-        {requirements.trim().length < 10 && (
-          <p className="text-xs text-destructive mt-2 text-center">
-            Please provide more detailed requirements
-          </p>
-        )}
-        
-        {availableCredits <= 0 && (
-          <p className="text-xs text-destructive mt-2 text-center">
-            You've used all your daily credits. Upgrade your plan for more.
-          </p>
-        )}
+        <div className="flex justify-between items-center">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Credits: </span>
+            <span className={`font-medium ${availableCredits > 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+              {availableCredits} remaining
+            </span>
+          </div>
+          
+          <Button
+            onClick={onGenerate}
+            disabled={isGenerateDisabled}
+            className="gap-2 bg-gradient-to-r from-app-purple to-app-blue hover:opacity-90 transition-opacity"
+          >
+            {isGenerating ? (
+              <>
+                <Bot className="h-4 w-4 animate-bounce" />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                <span>Generate Code</span>
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
-}
+};
 
 export default RequirementsForm;

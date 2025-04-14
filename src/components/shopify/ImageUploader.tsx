@@ -1,19 +1,20 @@
 
 import React, { useState, useCallback } from 'react';
+import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-interface ImageUploaderProps { 
+interface ImageUploaderProps {
   onImageUpload: (file: File, previewUrl: string) => void;
-  preview?: string | null;
-  onRemoveImage?: () => void;
+  preview: string | null;
+  onRemoveImage: () => void;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({ 
-  onImageUpload,
+  onImageUpload, 
   preview,
-  onRemoveImage 
+  onRemoveImage
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
@@ -70,74 +71,83 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     onImageUpload(file, previewUrl);
   }, [onImageUpload, toast]);
 
-  const removeImage = () => {
-    if (onRemoveImage) {
-      onRemoveImage();
-    }
-  };
-
   return (
-    <div className="glass-card">
-      <div className="p-4">
-        <h3 className="text-lg font-medium mb-3">Upload Reference Image</h3>
+    <Card>
+      <CardContent className="p-6">
+        <h3 className="text-lg font-semibold mb-3">Reference Image</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Upload an image of the website section you want to recreate
+        </p>
         
-        {!preview ? (
-          <div
+        {preview ? (
+          <div className="relative">
+            <img 
+              src={preview} 
+              alt="Reference design" 
+              className="w-full h-auto rounded-lg border border-border mb-2" 
+            />
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute top-2 right-2 h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={onRemoveImage}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Remove image</span>
+            </Button>
+            
+            <p className="text-xs text-muted-foreground mt-2">
+              This image will be used as a reference for generating your Shopify code
+            </p>
+          </div>
+        ) : (
+          <div 
+            className={`relative border-2 border-dashed rounded-lg transition-all overflow-hidden
+              ${isDragging 
+                ? 'border-primary bg-primary/5' 
+                : 'border-border hover:border-muted-foreground/50 bg-card/40'
+              }
+            `}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className={`
-              border-2 border-dashed rounded-md p-8
-              flex flex-col items-center justify-center text-center
-              transition-colors duration-200
-              ${isDragging ? 'border-secondary bg-secondary/5' : 'border-border'}
-            `}
           >
-            <ImageIcon size={40} className="text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground mb-2">
-              Drag & drop your image here or click to browse
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Supported formats: PNG, JPG, WEBP (max 5MB)
-            </p>
-            <label htmlFor="image-upload">
-              <Button
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={() => document.getElementById("image-upload")?.click()}
-              >
-                <Upload size={16} className="mr-2" />
-                Select Image
-              </Button>
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileInput}
-              />
-            </label>
-          </div>
-        ) : (
-          <div className="relative">
-            <img
-              src={preview}
-              alt="Uploaded preview"
-              className="w-full h-auto rounded-md object-contain max-h-64"
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileInput}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Upload image"
             />
-            <Button
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2 h-8 w-8"
-              onClick={removeImage}
-            >
-              <X size={16} />
-            </Button>
+            <div className="flex flex-col items-center justify-center text-center p-10 space-y-4">
+              <div className={`p-4 rounded-full ${isDragging ? 'bg-primary/10' : 'bg-muted'} transition-colors`}>
+                {isDragging ? (
+                  <ImageIcon className="h-8 w-8 text-primary animate-pulse" />
+                ) : (
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-medium">
+                  {isDragging ? 'Drop your image here' : 'Drag & drop your image here'}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  or <span className="text-primary cursor-pointer">browse files</span>
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap justify-center gap-2 mt-4 text-xs text-muted-foreground">
+                <span className="px-2 py-1 rounded-full bg-muted/80">JPEG</span>
+                <span className="px-2 py-1 rounded-full bg-muted/80">PNG</span>
+                <span className="px-2 py-1 rounded-full bg-muted/80">WebP</span>
+              </div>
+            </div>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

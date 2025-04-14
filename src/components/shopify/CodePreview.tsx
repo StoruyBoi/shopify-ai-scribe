@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, Copy, Code as CodeIcon, Download, Terminal } from 'lucide-react';
+import { Check, Copy, Code as CodeIcon, Download, Terminal, Expand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 
 interface CodePreviewProps {
@@ -21,9 +22,25 @@ const CodePreview: React.FC<CodePreviewProps> = ({
 }) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('all');
   const internalCodeRef = useRef<HTMLPreElement>(null);
   const codeRef = externalCodeRef || internalCodeRef;
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Parse code into HTML, CSS and Schema sections
+  const parseCode = (fullCode: string) => {
+    const htmlMatch = fullCode.match(/<div class="section-.*?">([\s\S]*?)<\/div>/);
+    const cssMatch = fullCode.match(/\.section-.*?}([\s\S]*?)@media/);
+    const schemaMatch = fullCode.match(/{% schema %}([\s\S]*?){% endschema %}/);
+
+    return {
+      html: htmlMatch ? htmlMatch[0] : '',
+      css: cssMatch ? cssMatch[0] : '',
+      schema: schemaMatch ? schemaMatch[1] : ''
+    };
+  };
+  
+  const parsedCode = parseCode(code);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -66,7 +83,12 @@ const CodePreview: React.FC<CodePreviewProps> = ({
           .replace(/'/g, "&#039;");
       };
       
-      const escapedCode = escapeHtml(code);
+      let displayCode = code;
+      if (activeTab === 'html') displayCode = parsedCode.html;
+      if (activeTab === 'css') displayCode = parsedCode.css;
+      if (activeTab === 'schema') displayCode = parsedCode.schema;
+      
+      const escapedCode = escapeHtml(displayCode);
       
       // Simple syntax highlighting for Liquid
       const highlightedCode = escapedCode
@@ -82,68 +104,88 @@ const CodePreview: React.FC<CodePreviewProps> = ({
         containerRef.current.scrollTop = containerRef.current.scrollHeight;
       }
     }
-  }, [code, codeRef, isGenerating]);
+  }, [code, codeRef, isGenerating, activeTab, parsedCode]);
 
   return (
-    <div className="rounded-lg border overflow-hidden glass">
-      <div className="p-3 border-b border-border flex items-center justify-between bg-muted/30">
-        <div className="flex items-center gap-2">
-          <CodeIcon className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-medium text-sm">{title}</h3>
-          {isGenerating && (
-            <div className="flex items-center gap-1.5 ml-2 text-xs text-primary font-mono">
-              <Terminal className="h-3 w-3 animate-pulse" />
-              <span className="animate-pulse">Generating...</span>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleDownload}
-            disabled={isGenerating || !code}
-            className="h-8 gap-1.5 text-xs"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>Download</span>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleCopy}
-            disabled={isGenerating || !code}
-            className="h-8 gap-1.5 text-xs"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                <span>Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                <span>Copy</span>
-              </>
+    <div className="rounded-lg border overflow-hidden bg-card">
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+        <div className="p-3 border-b border-border flex items-center justify-between bg-muted/30">
+          <div className="flex items-center gap-2">
+            <CodeIcon className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-medium text-sm">{title}</h3>
+            {isGenerating && (
+              <div className="flex items-center gap-1.5 ml-2 text-xs text-primary font-mono">
+                <Terminal className="h-3 w-3 animate-pulse" />
+                <span className="animate-pulse">Generating...</span>
+              </div>
             )}
-          </Button>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <TabsList className="h-8">
+              <TabsTrigger value="all" className="text-xs px-3 py-1 h-7">All</TabsTrigger>
+              <TabsTrigger value="html" className="text-xs px-3 py-1 h-7">HTML</TabsTrigger>
+              <TabsTrigger value="css" className="text-xs px-3 py-1 h-7">CSS</TabsTrigger>
+              <TabsTrigger value="schema" className="text-xs px-3 py-1 h-7">Schema</TabsTrigger>
+            </TabsList>
+            
+            <div className="flex items-center gap-1 ml-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleDownload}
+                disabled={isGenerating || !code}
+                className="h-7 px-2 text-xs"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span className="ml-1">Download</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleCopy}
+                disabled={isGenerating || !code}
+                className="h-7 px-2 text-xs"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    <span className="ml-1">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    <span className="ml-1">Copy</span>
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0"
+                title="Expand"
+              >
+                <Expand className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </Tabs>
       
-      <div className="p-4 bg-muted/10 relative">
+      <div className="p-4 bg-muted/5 relative">
         <div 
           ref={containerRef}
           className="overflow-y-auto max-h-[600px]"
         >
           <pre 
             ref={codeRef}
-            className={`text-xs md:text-sm p-2 rounded bg-background/50 border ${isGenerating ? 'border-primary/40' : 'border-border'}`}
+            className={`text-xs md:text-sm p-3 rounded bg-background/80 border font-mono overflow-x-auto ${isGenerating ? 'border-primary/40' : 'border-border'}`}
           >
             <code>{code}</code>
           </pre>
           
           {isGenerating && code && (
-            <div className="absolute bottom-4 right-4 bg-primary text-primary-foreground text-xs py-1 px-2 rounded">
+            <div className="absolute bottom-4 right-4 bg-primary text-primary-foreground text-xs py-1 px-2 rounded-md font-mono">
               Line {code.split('\n').length}
             </div>
           )}
