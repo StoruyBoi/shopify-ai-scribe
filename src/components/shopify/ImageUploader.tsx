@@ -1,75 +1,98 @@
 
-import React, { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-interface ImageUploaderProps {
-  onImageUpload: (image: File) => void;
+interface ImageUploaderProps { 
+  onImageUpload: (file: File, previewUrl: string) => void;
+  preview?: string | null;
+  onRemoveImage?: () => void;
 }
 
-export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
-  const [preview, setPreview] = useState<string | null>(null);
+const ImageUploader: React.FC<ImageUploaderProps> = ({ 
+  onImageUpload,
+  preview,
+  onRemoveImage 
+}) => {
   const [isDragging, setIsDragging] = useState(false);
-  
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onImageUpload(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const { toast } = useToast();
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
-  };
-  
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
-  };
-  
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+  }, []);
+
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      handleFiles(files);
+    }
+  }, []);
+
+  const handleFiles = useCallback((files: FileList) => {
+    if (files.length === 0) return;
+
+    const file = files[0];
+    const fileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      onImageUpload(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!fileTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file format",
+        description: "Please upload a JPEG, PNG, or WebP image.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    onImageUpload(file, previewUrl);
+  }, [onImageUpload, toast]);
+
+  const removeImage = () => {
+    if (onRemoveImage) {
+      onRemoveImage();
     }
   };
-  
-  const removeImage = () => {
-    setPreview(null);
-  };
-  
+
   return (
-    <Card className="glass-card overflow-hidden">
-      <CardContent className="p-4">
+    <div className="glass-card">
+      <div className="p-4">
         <h3 className="text-lg font-medium mb-3">Upload Reference Image</h3>
         
         {!preview ? (
           <div
-            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className={cn(
-              "border-2 border-dashed rounded-md p-8",
-              "flex flex-col items-center justify-center text-center",
-              "transition-colors duration-200",
-              isDragging ? "border-secondary bg-secondary/5" : "border-border"
-            )}
+            className={`
+              border-2 border-dashed rounded-md p-8
+              flex flex-col items-center justify-center text-center
+              transition-colors duration-200
+              ${isDragging ? 'border-secondary bg-secondary/5' : 'border-border'}
+            `}
           >
             <ImageIcon size={40} className="text-muted-foreground mb-4" />
             <p className="text-sm text-muted-foreground mb-2">
@@ -92,7 +115,7 @@ export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handleImageChange}
+                onChange={handleFileInput}
               />
             </label>
           </div>
@@ -113,7 +136,9 @@ export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
-}
+};
+
+export default ImageUploader;

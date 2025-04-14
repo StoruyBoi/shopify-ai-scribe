@@ -1,4 +1,5 @@
 
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -65,7 +66,10 @@ export default {
 					'accent-foreground': 'rgb(var(--sidebar-accent-foreground) / <alpha-value>)',
 					border: 'rgb(var(--sidebar-border) / <alpha-value>)',
 					ring: 'rgb(var(--sidebar-ring) / <alpha-value>)'
-				}
+				},
+				// App-specific colors matching the design
+				'app-purple': '#8B5CF6',
+				'app-blue': '#0EA5E9',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -105,3 +109,4 @@ export default {
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+

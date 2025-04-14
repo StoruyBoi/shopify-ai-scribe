@@ -1,33 +1,48 @@
 
 import React, { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { ImageUploader } from "@/components/shopify/ImageUploader";
-import { SectionTypeSelector } from "@/components/shopify/SectionTypeSelector";
-import { RequirementsForm } from "@/components/shopify/RequirementsForm";
-import { CodePreview } from "@/components/shopify/CodePreview";
-import { useToast } from "@/components/ui/use-toast";
+import ImageUploader from "@/components/shopify/ImageUploader";
+import SectionTypeSelector from "@/components/shopify/SectionTypeSelector";
+import RequirementsForm from "@/components/shopify/RequirementsForm";
+import PreviewArea from "@/components/shopify/PreviewArea";
+import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/contexts/AppContext";
+import { GeneratedCode, ImageOptions } from "@/types";
+import { generateShopifyCode } from "@/services/claude";
 
 const Index = () => {
+  // State
   const [image, setImage] = useState<File | null>(null);
-  const [sectionType, setSectionType] = useState("hero");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [sectionOptions, setSectionOptions] = useState<ImageOptions>({ purpose: "hero" });
   const [requirements, setRequirements] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<GeneratedCode | null>(null);
   
+  // Hooks
   const { toast } = useToast();
-  const { credits, setCredits } = useAppContext();
+  const { credits, useCredit } = useAppContext();
   
-  const handleImageUpload = (file: File) => {
+  // Handle image upload
+  const handleImageUpload = (file: File, previewUrl: string) => {
     setImage(file);
+    setImagePreview(previewUrl);
     toast({
       title: "Image uploaded",
       description: "Your reference image has been uploaded successfully.",
     });
   };
+
+  // Remove uploaded image
+  const handleRemoveImage = () => {
+    setImage(null);
+    setImagePreview(null);
+  };
   
-  const generateCode = () => {
-    if (credits <= 0) {
+  // Generate Shopify code
+  const generateCode = async () => {
+    // Validation
+    if (credits.current <= 0) {
       toast({
         title: "No credits remaining",
         description: "Upgrade your plan to get more credits.",
@@ -56,72 +71,90 @@ const Index = () => {
     
     setIsGenerating(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Mock generated code
-      const mockCode = `{% section 'section_${sectionType}' %}
+    try {
+      // Use a credit
+      useCredit();
       
-{% schema %}
-{
-  "name": "${sectionType} Section",
-  "settings": [
-    {
-      "type": "text",
-      "id": "heading",
-      "label": "Heading",
-      "default": "Your heading here"
-    },
-    {
-      "type": "richtext",
-      "id": "text",
-      "label": "Text",
-      "default": "<p>Your description here</p>"
-    },
-    {
-      "type": "image_picker",
-      "id": "image",
-      "label": "Image"
-    }
-  ],
-  "presets": [
-    {
-      "name": "${sectionType} Section",
-      "category": "Custom"
-    }
-  ]
-}
-{% endschema %}`;
+      // Generate image description
+      const imageDescription = `The user uploaded an image of a ${sectionOptions.purpose} section design.`;
       
-      setGeneratedCode(mockCode);
-      setCredits(credits - 1);
-      setIsGenerating(false);
+      // Get section type name (with custom handling)
+      const sectionType = sectionOptions.purpose === 'custom' 
+        ? sectionOptions.customType || 'custom section' 
+        : sectionOptions.purpose;
+      
+      // Generate code
+      const code = await generateShopifyCode(
+        sectionType,
+        requirements,
+        imageDescription
+      );
+      
+      setGeneratedCode(code);
       
       toast({
         title: "Code generated",
         description: "Your Shopify section code has been generated successfully.",
       });
-    }, 3000);
+    } catch (error) {
+      console.error("Error generating code:", error);
+      toast({
+        title: "Error generating code",
+        description: "There was an error generating your code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
   
   return (
     <Layout>
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mb-6">
+        <div className="max-w-4xl mx-auto text-center pt-4 pb-8">
+          <div className="inline-block bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium mb-4">
+            AI-Powered Shopify Code Generator
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-4">
+            Transform Images into Shopify Liquid Code
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Upload an image of a website section and let our AI generate Shopify Liquid code to recreate it.
+            Choose from product listings, sliders, banners and more.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
         <div className="space-y-6">
-          <ImageUploader onImageUpload={handleImageUpload} />
-          <SectionTypeSelector
-            selectedType={sectionType}
-            onTypeChange={setSectionType}
+          <ImageUploader 
+            onImageUpload={handleImageUpload} 
+            preview={imagePreview}
+            onRemoveImage={handleRemoveImage}
           />
+          
+          <SectionTypeSelector
+            selectedOptions={sectionOptions}
+            onOptionsChange={setSectionOptions}
+          />
+          
           <RequirementsForm
             requirements={requirements}
             onRequirementsChange={setRequirements}
             onGenerate={generateCode}
             isGenerating={isGenerating}
-            availableCredits={credits}
+            availableCredits={credits.current}
+            selectedOptions={sectionOptions}
+            imageUploaded={!!image}
           />
         </div>
-        <div className="h-full">
-          <CodePreview code={generatedCode} isGenerating={isGenerating} />
+        
+        <div>
+          <PreviewArea 
+            previewUrl={imagePreview}
+            isProcessing={isGenerating}
+            generatedCode={generatedCode}
+          />
         </div>
       </div>
     </Layout>
