@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import ImageUploader from "@/components/shopify/ImageUploader";
 import SectionTypeSelector from "@/components/shopify/SectionTypeSelector";
@@ -7,10 +7,16 @@ import RequirementsForm from "@/components/shopify/RequirementsForm";
 import PreviewArea from "@/components/shopify/PreviewArea";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/contexts/AppContext";
-import { GeneratedCode, ImageOptions } from "@/types";
+import { GeneratedCode, ImageOptions, ChatHistoryItem } from "@/types";
 import { generateShopifyCode } from "@/services/claude";
+import { useSearchParams } from 'react-router-dom';
+import { createNewChat, updateChat, getAllChats } from "@/services/chatHistoryService";
 
 const Index = () => {
+  // URL params
+  const [searchParams] = useSearchParams();
+  const chatId = searchParams.get('chatId');
+  
   // State
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -18,15 +24,57 @@ const Index = () => {
   const [requirements, setRequirements] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<GeneratedCode | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   
   // Hooks
   const { toast } = useToast();
   const { credits, useCredit } = useAppContext();
   
+  // Load chat data if chatId is provided
+  useEffect(() => {
+    if (chatId) {
+      const chats = getAllChats();
+      const selectedChat = chats.find(chat => chat.id === chatId);
+      
+      if (selectedChat) {
+        setCurrentChatId(chatId);
+        // If the chat has saved data, restore it
+        if (selectedChat.imageUrl) {
+          setImagePreview(selectedChat.imageUrl);
+          setCurrentStep(2); // Move to section type selection
+        }
+        
+        if (selectedChat.sectionType) {
+          const sectionType = selectedChat.sectionType as ImageOptions['purpose'];
+          setSectionOptions({ 
+            purpose: sectionType, 
+            customType: sectionType === 'custom' ? selectedChat.sectionType : undefined 
+          });
+        }
+      }
+    }
+  }, [chatId]);
+  
   // Handle image upload
   const handleImageUpload = (file: File, previewUrl: string) => {
     setImage(file);
     setImagePreview(previewUrl);
+    setCurrentStep(2); // Move to section type selection
+    
+    // Create new chat or update existing one
+    let chatToUpdate = currentChatId;
+    if (!chatToUpdate) {
+      const newChat = createNewChat();
+      chatToUpdate = newChat.id;
+      setCurrentChatId(newChat.id);
+    }
+    
+    // Update chat with image
+    updateChat(chatToUpdate, {
+      imageUrl: previewUrl
+    });
+    
     toast({
       title: "Image uploaded",
       description: "Your reference image has been uploaded successfully.",
@@ -37,6 +85,28 @@ const Index = () => {
   const handleRemoveImage = () => {
     setImage(null);
     setImagePreview(null);
+    setCurrentStep(1);
+    
+    if (currentChatId) {
+      updateChat(currentChatId, {
+        imageUrl: undefined
+      });
+    }
+  };
+  
+  // Update section options
+  const handleSectionOptionsChange = (options: ImageOptions) => {
+    setSectionOptions(options);
+    setCurrentStep(3); // Move to requirements step
+    
+    // Update chat with section type
+    if (currentChatId) {
+      updateChat(currentChatId, {
+        sectionType: options.purpose === 'custom' && options.customType 
+          ? options.customType 
+          : options.purpose
+      });
+    }
   };
   
   // Generate Shopify code
@@ -92,6 +162,13 @@ const Index = () => {
       
       setGeneratedCode(code);
       
+      // Update chat with title based on section type
+      if (currentChatId) {
+        updateChat(currentChatId, {
+          title: `${sectionType.charAt(0).toUpperCase() + sectionType.slice(1)} section`
+        });
+      }
+      
       toast({
         title: "Code generated",
         description: "Your Shopify section code has been generated successfully.",
@@ -134,7 +211,8 @@ const Index = () => {
             
             <SectionTypeSelector
               selectedOptions={sectionOptions}
-              onOptionsChange={setSectionOptions}
+              onOptionsChange={handleSectionOptionsChange}
+              isVisible={currentStep >= 2}
             />
             
             <RequirementsForm
@@ -145,6 +223,7 @@ const Index = () => {
               availableCredits={credits.current}
               selectedOptions={sectionOptions}
               imageUploaded={!!image}
+              isVisible={currentStep >= 3}
             />
           </div>
           
@@ -153,6 +232,7 @@ const Index = () => {
               previewUrl={imagePreview}
               isProcessing={isGenerating}
               generatedCode={generatedCode}
+              currentStep={currentStep}
             />
           </div>
         </div>

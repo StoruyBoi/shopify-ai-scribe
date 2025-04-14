@@ -20,4 +20,5 @@ export interface ChatHistoryItem {
   date: string;
   imageUrl?: string;
   sectionType?: string;
+  requirements?: string;
 }

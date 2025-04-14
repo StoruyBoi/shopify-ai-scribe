@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 interface SectionTypeSelectorProps {
   selectedOptions: ImageOptions;
   onOptionsChange: (options: ImageOptions) => void;
+  isVisible: boolean;
 }
 
 const sectionTypes: Array<{
@@ -80,8 +81,11 @@ const sectionTypes: Array<{
 
 const SectionTypeSelector: React.FC<SectionTypeSelectorProps> = ({ 
   selectedOptions, 
-  onOptionsChange 
+  onOptionsChange,
+  isVisible
 }) => {
+  if (!isVisible) return null;
+  
   const handlePurposeSelect = (purpose: ImageOptions['purpose']) => {
     onOptionsChange({ 
       ...selectedOptions, 
@@ -97,9 +101,14 @@ const SectionTypeSelector: React.FC<SectionTypeSelectorProps> = ({
   };
 
   return (
-    <Card>
+    <Card className="transition-all duration-300 ease-in-out">
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-3">Section Type</h3>
+        <div className="flex items-center mb-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+            <span className="text-primary font-bold">2</span>
+          </div>
+          <h3 className="text-lg font-semibold">Section Type</h3>
+        </div>
         <p className="text-sm text-muted-foreground mb-4">Select the type of Shopify section you want to create</p>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">

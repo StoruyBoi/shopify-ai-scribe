@@ -72,9 +72,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   }, [onImageUpload, toast]);
 
   return (
-    <Card>
+    <Card className="transition-all duration-300 ease-in-out">
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-3">Reference Image</h3>
+        <div className="flex items-center mb-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+            <span className="text-primary font-bold">1</span>
+          </div>
+          <h3 className="text-lg font-semibold">Reference Image</h3>
+        </div>
         <p className="text-sm text-muted-foreground mb-4">
           Upload an image of the website section you want to recreate
         </p>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, Bot, AlertCircle, Terminal, Server, ArrowRight, FileCode, Copy, ExternalLink } from 'lucide-react';
+import { Loader2, Bot, AlertCircle, Terminal, Server, ArrowRight, FileCode, ExternalLink } from 'lucide-react';
 import CodePreview from './CodePreview';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,12 +12,14 @@ interface PreviewAreaProps {
   previewUrl: string | null;
   isProcessing: boolean;
   generatedCode?: GeneratedCode | null;
+  currentStep: number;
 }
 
 const PreviewArea: React.FC<PreviewAreaProps> = ({ 
   previewUrl,
   isProcessing,
-  generatedCode
+  generatedCode,
+  currentStep
 }) => {
   const [displayCode, setDisplayCode] = useState<string>('');
   const [isGeneratingAnimation, setIsGeneratingAnimation] = useState(false);
@@ -68,7 +70,22 @@ const PreviewArea: React.FC<PreviewAreaProps> = ({
     }
   }, [isProcessing, generatedCode, isGeneratingAnimation]);
 
-  if (!previewUrl && !isProcessing && !generatedCode) return null;
+  // Empty state for first step
+  if (currentStep === 1 && !previewUrl && !isProcessing && !generatedCode) {
+    return (
+      <Card className="h-full">
+        <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[400px]">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <ArrowRight className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-medium mb-2">Start by uploading an image</h3>
+          <p className="text-muted-foreground max-w-md">
+            Upload an image of the Shopify section you want to recreate. Our AI will analyze it and generate code.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6 rounded-lg overflow-hidden">
@@ -84,6 +101,34 @@ const PreviewArea: React.FC<PreviewAreaProps> = ({
           </div>
           <CardContent className="p-3 text-sm text-muted-foreground">
             Reference image
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Step 2 empty state */}
+      {currentStep === 2 && !isProcessing && !generatedCode && (
+        <Card>
+          <CardContent className="p-6 py-10">
+            <div className="text-center">
+              <h3 className="text-lg font-medium mb-2">Select a section type</h3>
+              <p className="text-muted-foreground text-sm">
+                Choose the type of Shopify section that best matches your image
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Step 3 empty state */}
+      {currentStep === 3 && !isProcessing && !generatedCode && (
+        <Card>
+          <CardContent className="p-6 py-10">
+            <div className="text-center">
+              <h3 className="text-lg font-medium mb-2">Add your requirements</h3>
+              <p className="text-muted-foreground text-sm">
+                Describe how you want your section to look and function
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
