@@ -14,7 +14,7 @@ const Index = () => {
   // State
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [sectionOptions, setSectionOptions] = useState<ImageOptions>({ purpose: "hero" });
+  const [sectionOptions, setSectionOptions] = useState<ImageOptions>({ purpose: "product" });
   const [requirements, setRequirements] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<GeneratedCode | null>(null);
